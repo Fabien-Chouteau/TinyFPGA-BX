@@ -14,11 +14,15 @@ hardware.bin: hardware.asc
 	icepack hardware.asc hardware.bin
 
 
-firmware.elf: sections.lds start.S firmware.c 
-	riscv32-unknown-elf-gcc -march=rv32imc -nostartfiles -Wl,-Bstatic,-T,sections.lds,--strip-debug,-Map=firmware.map,--cref  -ffreestanding -nostdlib -o firmware.elf start.S firmware.c
+firmware.elf::
+	gprbuild --target=riscv32-elf --RTS=zfp-picorv32 -O2 firmware \
+		-o firmware.elf \
+		-cargs -fdata-sections -ffunction-sections \
+		-largs -Wl,-gc-section,--print-memory-usage
+	# riscv32-elf-gcc -march=rv32imc -nostartfiles -Wl,-Bstatic,-T,sections.lds,--strip-debug,-Map=firmware.map,--cref  -ffreestanding -nostdlib -o firmware.elf start.S firmware.c
 
 firmware.bin: firmware.elf
-	riscv32-unknown-elf-objcopy -O binary firmware.elf /dev/stdout > firmware.bin
+	riscv32-elf-objcopy -O binary firmware.elf /dev/stdout > firmware.bin
 
 
 clean:
